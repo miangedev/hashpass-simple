@@ -102,7 +102,7 @@ Este proyecto fue creado por **Mikel (Angel Osorio Orduz)** con fines educativos
 
 ### Vibecoding
 
-El diseño visual y parte de la estructura del código fueron desarrollados mediante **vibecoding** — una metodología de desarrollo asistida por IA donde el desarrollador describe la intención, el estilo y los requisitos en lenguaje natural, y colabora con un modelo de lenguaje para iterar sobre el resultado.
+El diseño visual fue desarrollado mediante **vibecoding**
 
 ---
 
