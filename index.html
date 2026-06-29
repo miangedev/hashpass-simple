@@ -10,7 +10,6 @@
     <link
         href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -32,7 +31,7 @@
                 </svg>
             </a>
             <button class="theme-toggle" id="theme-toggle" aria-label="Cambiar tema">
-                <span class="theme-icon" id="theme-icon">☀️</span>
+                <span class="theme-icon" id="theme-icon">☀</span>
             </button>
         </div>
     </nav>
@@ -67,7 +66,6 @@
             <div class="gen-card reveal">
 
                 <div class="gen-grid">
-                    <!-- Left: inputs -->
                     <div class="gen-inputs">
 
                         <div class="field">
@@ -131,7 +129,6 @@
 
                     </div>
 
-                    <!-- Right: output -->
                     <div class="gen-output">
                         <div class="output-box">
                             <p class="mono output-label">Contraseña generada</p>
@@ -159,7 +156,6 @@
                             </div>
                         </div>
 
-                        <!-- Info strip -->
                         <div class="info-strip">
                             <div class="info-strip-item">
                                 <span class="serif info-num accent">∞</span>
@@ -277,7 +273,7 @@
         </div>
     </footer>
 
-    <script src="app.js"></script>
+    <script type="module" src="/src/app.ts"></script>
 </body>
 
 </html>
