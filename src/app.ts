@@ -1,8 +1,16 @@
-const html      = document.documentElement;
-const themeBtn  = document.getElementById('theme-toggle');
-const themeIcon = document.getElementById('theme-icon');
+import './style.css';
+import {
+  html, themeBtn, themeIcon,
+  opts,
+  masterEl, siteEl, lengthEl, lenVal, lenDisp,
+  btnGen, btnCopy, passDisp, sFill, sName, copyText,
+  eyeToggle, eyeOpen, eyeClosed,
+  LEVELS, SCRAMBLE_CHARS,
+} from './variables';
 
-function initTheme() {
+let currentPassword = '';
+
+function initTheme(): void {
   const stored = localStorage.getItem('hp_theme');
   if (stored) {
     applyTheme(stored);
@@ -12,7 +20,7 @@ function initTheme() {
   }
 }
 
-function applyTheme(t) {
+function applyTheme(t: string): void {
   html.setAttribute('data-theme', t);
   themeIcon.textContent = t === 'dark' ? '☀️' : '🌙';
   localStorage.setItem('hp_theme', t);
@@ -23,66 +31,41 @@ themeBtn.addEventListener('click', () => {
   applyTheme(current === 'dark' ? 'light' : 'dark');
 });
 
-// Follow system changes only if user hasn't manually set a preference
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-  // Only auto-switch if user hasn't manually chosen
-  // (We skip this since localStorage always has a value after init)
-});
-
 initTheme();
-
-const opts = { upper: true, num: true, sym: true };
-let currentPassword = '';
-
-const masterEl  = document.getElementById('master');
-const siteEl    = document.getElementById('site');
-const lengthEl  = document.getElementById('length');
-const lenVal    = document.getElementById('len-val');
-const lenDisp   = document.getElementById('len-display');
-const btnGen    = document.getElementById('btn-gen');
-const btnCopy   = document.getElementById('btn-copy');
-const passDisp  = document.getElementById('pass-display');
-const sFill     = document.getElementById('strength-fill');
-const sName     = document.getElementById('strength-name');
-const copyText  = document.getElementById('copy-text');
-const eyeToggle = document.getElementById('eye-toggle');
-const eyeOpen   = document.getElementById('eye-open');
-const eyeClosed = document.getElementById('eye-closed');
 
 eyeToggle.addEventListener('click', () => {
   const showing = masterEl.type === 'text';
   masterEl.type = showing ? 'password' : 'text';
-  eyeOpen.style.display   = showing ? '' : 'none';
+  eyeOpen.style.display = showing ? '' : 'none';
   eyeClosed.style.display = showing ? 'none' : '';
 });
 
-/* Movimiento y datos del Slider */
 lengthEl.addEventListener('input', () => {
   lenVal.textContent = lenDisp.textContent = lengthEl.value;
 });
 
 document.querySelectorAll('.chip').forEach(chip => {
   chip.addEventListener('click', () => {
-    const k = chip.dataset.key;
+    const el = chip as HTMLElement;
+    const k = el.dataset.key!;
     const activeCount = Object.values(opts).filter(Boolean).length;
-    if (opts[k] && activeCount === 1) return; // keep at least one
+    if (opts[k] && activeCount === 1) return;
     opts[k] = !opts[k];
-    chip.classList.toggle('active', opts[k]);
+    el.classList.toggle('active', opts[k]);
   });
 });
 
-/* Activar los botones de generación */
 [masterEl, siteEl].forEach(el => {
   el.addEventListener('input', () => {
     btnGen.disabled = !(masterEl.value.trim() && siteEl.value.trim());
   });
 });
 
-siteEl.addEventListener('keydown', e => {
+siteEl.addEventListener('keydown', (e: KeyboardEvent) => {
   if (e.key === 'Enter' && !btnGen.disabled) btnGen.click();
 });
 
-function buildCharset() {
+function buildCharset(): string {
   let c = 'abcdefghijklmnopqrstuvwxyz';
   if (opts.upper) c += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   if (opts.num)   c += '0123456789';
@@ -90,8 +73,8 @@ function buildCharset() {
   return c;
 }
 
-async function derivePassword(master, site, length) {
-  const enc    = new TextEncoder();
+async function derivePassword(master: string, site: string, length: number): Promise<string> {
+  const enc = new TextEncoder();
   const keyMat = await crypto.subtle.importKey(
     'raw', enc.encode(master), 'PBKDF2', false, ['deriveBits']
   );
@@ -101,14 +84,15 @@ async function derivePassword(master, site, length) {
     keyMat,
     length * 8
   );
-  const bytes   = new Uint8Array(bits);
+  const bytes = new Uint8Array(bits);
   const charset = buildCharset();
-  let arr       = Array.from(bytes).map(b => charset[b % charset.length]);
+  let arr = Array.from(bytes).map(b => charset[b % charset.length]);
 
-  const guarantees = [];
+  const guarantees: string[] = [];
   if (opts.upper) guarantees.push('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
   if (opts.num)   guarantees.push('0123456789');
   if (opts.sym)   guarantees.push('!@#$%^&*()-_=+[]{}|;:,.<>?');
+
   guarantees.forEach((pool, i) => {
     arr[i] = pool[bytes[length + i] % pool.length];
   });
@@ -121,16 +105,7 @@ async function derivePassword(master, site, length) {
   return arr.join('');
 }
 
-const LEVELS = [
-  { label: 'Muy débil',  color: '#FF4444', w: '14%' },
-  { label: 'Débil',      color: '#FF6B6B', w: '28%' },
-  { label: 'Regular',    color: '#FFB347', w: '46%' },
-  { label: 'Buena',      color: '#FFE147', w: '62%' },
-  { label: 'Fuerte',     color: '#7DDB60', w: '80%' },
-  { label: 'Muy fuerte', color: '#00D4AA', w: '100%' },
-];
-
-function scorePassword(pwd) {
+function scorePassword(pwd: string): number {
   let s = 0;
   if (pwd.length >= 12) s++;
   if (pwd.length >= 20) s++;
@@ -141,24 +116,22 @@ function scorePassword(pwd) {
   return Math.min(s, LEVELS.length - 1);
 }
 
-function updateStrength(pwd) {
+function updateStrength(pwd: string): void {
   const lv = LEVELS[scorePassword(pwd)];
-  sFill.style.width      = lv.w;
+  sFill.style.width = lv.w;
   sFill.style.background = lv.color;
-  sName.textContent      = lv.label;
-  sName.style.color      = lv.color;
+  sName.textContent = lv.label;
+  sName.style.color = lv.color;
 }
 
-const SCRAMBLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-
-function scrambleReveal(target, duration = 700) {
-  const len   = target.length;
+function scrambleReveal(target: string, duration = 700): void {
+  const len = target.length;
   const start = performance.now();
-  let   frame;
+  let frame: number;
 
   passDisp.classList.remove('empty', 'revealed');
 
-  function tick(now) {
+  function tick(now: number): void {
     const progress = Math.min((now - start) / duration, 1);
     const resolved = Math.floor(progress * len);
     let out = '';
@@ -176,19 +149,17 @@ function scrambleReveal(target, duration = 700) {
     }
   }
 
-  cancelAnimationFrame(frame);
+  cancelAnimationFrame(frame!);
   frame = requestAnimationFrame(tick);
 }
 
-/* Generar la contraseña */
 btnGen.addEventListener('click', async () => {
   const master = masterEl.value.trim();
-  const site   = siteEl.value.trim();
+  const site = siteEl.value.trim();
   const length = parseInt(lengthEl.value, 10);
-
   if (!master || !site) return;
 
-  btnGen.disabled    = true;
+  btnGen.disabled = true;
   btnGen.textContent = 'Calculando…';
   passDisp.classList.add('empty');
   passDisp.classList.remove('revealed');
@@ -208,21 +179,19 @@ btnGen.addEventListener('click', async () => {
     passDisp.textContent = 'Error al generar. Intenta de nuevo.';
     console.error('HashPass derive error:', err);
   } finally {
-    btnGen.disabled    = false;
+    btnGen.disabled = false;
     btnGen.textContent = 'Generar contraseña';
   }
 });
 
-/* Copiar la contraseña */
 btnCopy.addEventListener('click', async () => {
   if (!currentPassword) return;
   try {
     await navigator.clipboard.writeText(currentPassword);
   } catch {
-    // Fallback for older browsers or HTTP
     const ta = Object.assign(document.createElement('textarea'), {
       value: currentPassword,
-      style: 'position:fixed;opacity:0'
+      style: 'position:fixed;opacity:0',
     });
     document.body.appendChild(ta);
     ta.select();
@@ -247,14 +216,14 @@ const revealObserver = new IntersectionObserver(entries => {
 }, { threshold: 0.12 });
 
 document.querySelectorAll('.reveal').forEach((el, i) => {
-  el.style.transitionDelay = `${i * 0.06}s`;
+  (el as HTMLElement).style.transitionDelay = `${i * 0.06}s`;
   revealObserver.observe(el);
 });
 
 document.querySelectorAll('a[href^="#"]').forEach(a => {
   a.addEventListener('click', e => {
     e.preventDefault();
-    const target = document.querySelector(a.getAttribute('href'));
+    const target = document.querySelector((a as HTMLAnchorElement).getAttribute('href')!);
     if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 });
